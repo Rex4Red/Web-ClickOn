@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - ClickOn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { accent: { DEFAULT: '#14b8a6', hover: '#0d9488' } } } } }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="bg-black font-sans text-gray-200">
+
+    <nav class="bg-zinc-900 border-b border-white/10 p-4 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="text-xl font-bold text-white">Click<span class="text-accent">On</span></a>
+                <span class="bg-accent text-black text-xs font-bold px-2 py-0.5 rounded">ADMIN</span>
+            </div>
+            <button onclick="logout()" class="text-red-500 font-bold hover:text-white text-sm">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-6 space-y-10">
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="p-6 bg-zinc-900 border border-white/10 rounded-xl">
+                <p class="text-gray-400 text-xs font-bold uppercase">Tiket Terjual</p>
+                <h2 id="totalTicketSold" class="text-4xl font-extrabold text-white">0</h2>
+            </div>
+            <div class="p-6 bg-zinc-900 border border-white/10 rounded-xl">
+                <p class="text-gray-400 text-xs font-bold uppercase">Pendapatan</p>
+                <h2 class="text-2xl font-bold text-accent"><span id="totalTicketRev">0</span></h2>
+            </div>
+            <div class="p-6 bg-zinc-900 border border-white/10 rounded-xl">
+                <p class="text-gray-400 text-xs font-bold uppercase">Total User</p>
+                <h2 id="totalUsers" class="text-4xl font-extrabold text-white">0</h2>
+            </div>
+        </div>
+
+        <div class="bg-zinc-900 border border-white/10 rounded-xl overflow-hidden">
+            <div class="bg-white/5 px-6 py-4 border-b border-white/10 flex justify-between items-center">
+                <h3 class="font-bold text-white">Daftar Event</h3>
+                <button onclick="loadAdminEvents()" class="text-accent text-xs font-bold hover:underline">REFRESH</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-gray-400">
+                    <thead class="bg-black text-gray-200 uppercase font-bold text-xs">
+                        <tr>
+                            <th class="px-6 py-3">Event</th>
+                            <th class="px-6 py-3">Tanggal</th>
+                            <th class="px-6 py-3">Status</th>
+                            <th class="px-6 py-3 text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-event-list" class="divide-y divide-white/10">
+                        <tr><td colspan="4" class="px-6 py-4 text-center">Memuat data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bg-zinc-900 border border-white/10 rounded-xl p-6">
+                <h3 class="font-bold text-white mb-4">Tambah Event</h3>
+                <form id="addEventForm" class="space-y-4">
+                    <input type="text" id="eventTitle" placeholder="Nama Event" class="w-full bg-black border border-white/20 rounded px-4 py-2 text-white outline-none focus:border-accent" required>
+                    <input type="text" id="eventVenue" placeholder="Lokasi" class="w-full bg-black border border-white/20 rounded px-4 py-2 text-white outline-none focus:border-accent" required>
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="datetime-local" id="eventDate" class="bg-black border border-white/20 rounded px-4 py-2 text-white outline-none focus:border-accent" required>
+                        <input type="number" id="eventPrice" placeholder="Harga" class="bg-black border border-white/20 rounded px-4 py-2 text-white outline-none focus:border-accent" required>
+                    </div>
+                    <textarea id="eventDesc" placeholder="Deskripsi" class="w-full bg-black border border-white/20 rounded px-4 py-2 text-white outline-none focus:border-accent"></textarea>
+                    <button type="submit" class="w-full bg-accent text-black font-bold py-2 rounded hover:bg-white transition">Simpan</button>
+                </form>
+            </div>
+
+            <div class="bg-zinc-900 border border-white/10 rounded-xl p-6 h-fit">
+                <h3 class="font-bold text-white mb-4">Check-in Tiket</h3>
+                <p class="text-xs text-gray-500 mb-3">Masukkan Kode Tiket Penonton untuk Validasi Masuk.</p>
+                
+                <input type="text" id="checkinCode" placeholder="Kode Tiket (CKT...)" class="w-full bg-black border border-white/20 rounded px-4 py-3 text-white text-center font-mono mb-4 text-lg outline-none focus:border-accent">
+                
+                <button onclick="validateTicket()" class="w-full bg-white/10 text-white font-bold py-2 rounded hover:bg-white/20 transition">Validasi</button>
+                
+                <div id="checkinResult" class="mt-4 hidden p-3 rounded text-center text-sm border"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(localStorage.getItem('clickon_user') || '{}');
+            if(user.role !== 'admin' && user.role !== 'panitia') window.location.href = 'index.html';
+            loadDashboardStats();
+            loadAdminEvents();
+        });
+    </script>
+</body>
+</html>

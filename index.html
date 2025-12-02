@@ -16,48 +16,34 @@
         }
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-
-    <script>
-    // Cek jika TIDAK ADA token
-    if (!localStorage.getItem('clickon_token')) {
-        // Lempar ke login
-        window.location.href = 'login.html';
-    }
-    </script>
-    </head>
+</head>
 <body class="bg-black font-sans text-gray-200">
 
     <header class="bg-black/70 sticky top-0 z-50 backdrop-blur-md border-b border-white/10">
         <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-3xl font-extrabold text-white">Click<span class="text-accent">On</span></h1>
+            <a href="index.html" class="text-3xl font-extrabold text-white">Click<span class="text-accent">On</span></a>
             
             <ul class="hidden md:flex space-x-6 items-center">
-                <li><a href="#hero" class="font-semibold text-gray-300 hover:text-white">Beranda</a></li>
-                <li><a href="#concerts" class="font-semibold text-gray-300 hover:text-white">Konser</a></li>
-                <li><a href="#features" class="font-semibold text-gray-300 hover:text-white">Fitur</a></li>
+                <li><a href="index.html" class="font-semibold text-white">Beranda</a></li>
+                <li><a href="index.html#concerts" class="font-semibold text-gray-300 hover:text-white">Konser</a></li>
+                <li><a href="merchandise.html" class="font-semibold text-gray-300 hover:text-white">Merchandise</a></li>
+                <li><a href="history.html" id="nav-history" class="hidden font-semibold text-gray-300 hover:text-white border-b-2 border-accent">Riwayat</a></li>
                 
                 <li><a id="auth-button" href="login.html" class="bg-accent text-black font-bold px-5 py-2 rounded-lg transition duration-300 hover:bg-accent-hover">
-                        Login/Daftar
-                    </a></li>
+                    Login/Daftar
+                </a></li>
             </ul>
-            
-            <div class="md:hidden">
-                <button class="text-gray-300 hover:text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-                    </svg>
-                </button>
-            </div>
         </nav>
     </header>
 
-    <section id="hero" class="bg-black text-center pt-24 pb-32">
-        <div class="container mx-auto px-4">
+    <section id="hero" class="bg-black text-center pt-24 pb-32 bg-[url('https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?q=80&w=1974&auto=format&fit=crop')] bg-cover bg-center relative">
+        <div class="absolute inset-0 bg-black/80"></div>
+        <div class="container mx-auto px-4 relative z-10">
             <h2 class="text-5xl md:text-6xl font-extrabold mb-4 text-white leading-tight">
                 Pengalaman Konser <br> Modern & Aman
             </h2>
             <p class="text-lg text-gray-400 mb-10 max-w-2xl mx-auto">Temukan, beli tiket, dan nikmati merchandise resmi. Semua dalam satu platform terintegrasi.</p>
-            <a href="#concerts" class="bg-accent text-black font-bold px-8 py-3 rounded-lg transition duration-300 hover:bg-accent-hover transform hover:scale-105">Lihat Jadwal Konser</a>
+            <a href="#concerts" class="bg-accent text-black font-bold px-8 py-3 rounded-lg transition duration-300 hover:bg-accent-hover transform hover:scale-105 inline-block">Lihat Jadwal Konser</a>
         </div>
     </section>
 
@@ -65,124 +51,33 @@
         <div class="container mx-auto px-4">
             <h2 class="text-4xl font-extrabold text-center mb-16 text-white">Konser Akan Datang</h2>
             <div id="concert-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                
-                
+                <div class="col-span-full text-center py-10 animate-pulse text-gray-500">Memuat event...</div>
             </div>
         </div>
     </section>
 
-    <section id="features" class="py-24 bg-black">
-        <div class="container mx-auto px-4">
-            <h2 class="text-4xl font-extrabold text-center mb-16 text-white">Kenapa Memilih ClickOn?</h2>
-            <div class="grid md:grid-cols-3 gap-8 text-center">
-                <div class="p-6">
-                    <div class="w-16 h-16 bg-accent/10 text-accent rounded-full flex items-center justify-center mx-auto mb-5">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2H5z" /></svg>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2 text-white">Tiket Digital (E-Ticket)</h3>
-                    <p class="text-gray-400">Sistem penjualan tiket digital dengan QR Code yang aman dan transparan.</p>
-                </div>
-                <div class="p-6">
-                    <div class="w-16 h-16 bg-accent/10 text-accent rounded-full flex items-center justify-center mx-auto mb-5">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2 text-white">Merchandise Resmi</h3>
-                    <p class="text-gray-400">Beli merchandise resmi dengan pengelolaan stok real-time.</p>
-                </div>
-                <div class="p-6">
-                    <div class="w-16 h-16 bg-accent/10 text-accent rounded-full flex items-center justify-center mx-auto mb-5">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2 text-white">Database Terintegrasi</h3>
-                    <p class="text-gray-400">Manajemen event terpusat untuk pengalaman konser yang lebih baik.</p>
-                </div>
+    <section class="py-24 bg-black">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-4xl font-extrabold text-white mb-10">Fitur Unggulan</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="p-6 bg-zinc-900/50 rounded-xl border border-white/5"><h3 class="text-xl font-bold text-white mb-2">Tiket Digital</h3><p class="text-gray-400">Akses masuk mudah dengan QR Code.</p></div>
+                <div class="p-6 bg-zinc-900/50 rounded-xl border border-white/5"><h3 class="text-xl font-bold text-white mb-2">Official Merch</h3><p class="text-gray-400">Jaminan produk asli dari artis.</p></div>
+                <div class="p-6 bg-zinc-900/50 rounded-xl border border-white/5"><h3 class="text-xl font-bold text-white mb-2">Aman & Resmi</h3><p class="text-gray-400">Transaksi terjamin aman 100%.</p></div>
             </div>
         </div>
     </section>
 
     <footer class="bg-zinc-900 text-gray-500 text-center py-8 mt-12 border-t border-white/10">
-        <div class="container mx-auto px-4">
-            <p>&copy; 2Data025 ClickOn. Dikembangkan oleh Kelompok 4 Informatika UPNVY.</p>
-        </div>
+        <div class="container mx-auto px-4"><p>&copy; 2025 ClickOn. Kelompok 4 Informatika UPNVY.</p></div>
     </footer>
 
-
+    <script src="script.js"></script>
     <script>
-        // Fungsi untuk format mata uang Rupiah
-        function formatRupiah(angka) {
-            return new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                minimumFractionDigits: 0
-            }).format(angka);
-        }
-
-        // Fungsi untuk memformat tanggal
-        function formatTanggal(dateString) {
-            const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            return new Date(dateString).toLocaleDateString('id-ID', options);
-        }
-
-        // Fungsi untuk mengambil dan menampilkan konser
-        async function loadConcerts() {
-            const grid = document.getElementById('concert-grid');
-            grid.innerHTML = '<p class="text-gray-400">Memuat konser...</p>';
-
-            try {
-                const response = await fetch('http://localhost:3000/events');
-                if (!response.ok) throw new Error('Gagal mengambil data konser.');
-                const events = await response.json();
-                
-                grid.innerHTML = ''; // Kosongkan loading
-
-                // Loop data dan buat kartu HTML-nya
-                events.forEach(event => {
-                    const card = `
-                        <div class="bg-black rounded-xl overflow-hidden flex flex-col border border-white/10 transition-all duration-300 hover:border-accent/70 hover:shadow-lg hover:shadow-accent/10 hover:-translate-y-1.5">
-                            <div class="w-full h-48 bg-zinc-800 flex items-center justify-center text-gray-500">
-                                [ Gambar ${event.title} ]
-                            </div>
-                            <div class="p-6 flex flex-col flex-grow">
-                                <h3 class="text-xl font-semibold mb-2 text-white">${event.title}</h3>
-                                <p class="text-gray-400 mb-2"><strong>Lokasi:</strong> ${event.venue}</p>
-                                <p class="text-gray-400 mb-2"><strong>Tanggal:</strong> ${formatTanggal(event.event_date)}</p>
-                                <p class="text-accent text-lg font-bold mb-6">${formatRupiah(event.price)}</p>
-                                <a href="checkout.html?event_id=${event.id}" class="w-full mt-auto block text-center bg-accent text-black font-bold px-5 py-2.5 rounded-lg transition duration-300 hover:bg-accent-hover">
-                                Beli Tiket
-                                </a>
-                            </div>
-                        </div>
-                    `;
-                    grid.innerHTML += card;
-                });
-
-            } catch (error) {
-                grid.innerHTML = `<p class="text-red-500">${error.message}</p>`;
-            }
-        }
-
-        // --- Logic Logout (Tetap sama) ---
-        document.addEventListener('DOMContentLoaded', function() {
-            const authButton = document.getElementById('auth-button');
-            
-            if (localStorage.getItem('clickon_token')) {
-                authButton.textContent = 'Logout';
-                authButton.classList.remove('bg-accent', 'text-black');
-                authButton.classList.add('bg-red-600', 'text-white', 'hover:bg-red-700');
-
-                authButton.addEventListener('click', function(event) {
-                    event.preventDefault(); 
-                    localStorage.removeItem('clickon_token');
-                    localStorage.removeItem('clickon_user');
-                    window.location.href = 'login.html';
-                });
-            }
-
-            // Panggil fungsi untuk memuat konser
-            loadConcerts();
+        // Init Halaman Index
+        document.addEventListener('DOMContentLoaded', () => {
+            checkLoginNavbar(); // Cek login untuk navbar
+            loadConcerts();     // Load data konser
         });
     </script>
 </body>
 </html>
-
-

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchandise - ClickOn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { 'sans': ['Inter', 'ui-sans-serif'] }, colors: { accent: { DEFAULT: '#14b8a6', hover: '#0d9488' } } } } }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="bg-black font-sans text-gray-200">
+
+    <header class="bg-black/70 sticky top-0 z-50 backdrop-blur-md border-b border-white/10">
+        <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="index.html" class="text-3xl font-extrabold text-white">Click<span class="text-accent">On</span></a>
+            <ul class="hidden md:flex space-x-6 items-center">
+                <li><a href="index.html" class="font-semibold text-gray-300 hover:text-white">Beranda</a></li>
+                <li><a href="index.html#concerts" class="font-semibold text-gray-300 hover:text-white">Konser</a></li>
+                <li><a href="merchandise.html" class="font-semibold text-white">Merchandise</a></li>
+                <li><a href="history.html" id="nav-history" class="hidden font-semibold text-gray-300 hover:text-white border-b-2 border-accent">Riwayat</a></li>
+                <li><a id="auth-button" href="login.html" class="bg-accent text-black font-bold px-5 py-2 rounded-lg transition duration-300 hover:bg-accent-hover">Login/Daftar</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container mx-auto px-4 py-12 min-h-screen">
+        <h2 class="text-center text-4xl font-extrabold text-white mb-8">Official Merchandise</h2>
+        
+        <div class="flex justify-center mb-10">
+            <select id="eventSelect" onchange="loadMerchandise(this.value)" class="bg-zinc-800 border border-white/20 text-white rounded-lg px-6 py-3 outline-none focus:ring-2 focus:ring-accent w-full max-w-md text-center">
+                <option value="">-- Pilih Event Konser --</option>
+            </select>
+        </div>
+
+        <div id="merchList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="col-span-full text-center text-gray-500 py-16 border-2 border-dashed border-white/10 rounded-xl">Silakan pilih event di atas.</div>
+        </div>
+    </div>
+
+    <footer class="bg-zinc-900 text-gray-500 text-center py-8 mt-12 border-t border-white/10">
+        <div class="container mx-auto px-4"><p>&copy; 2025 ClickOn.</p></div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            checkLoginNavbar();
+            loadEventsToDropdown();
+        });
+    </script>
+</body>
+</html>

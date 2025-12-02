@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - ClickOn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 'sans': ['Inter', 'ui-sans-serif', 'system-ui'] },
+                    colors: { accent: { DEFAULT: '#14b8a6', hover: '#0d9488' } }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        if (!localStorage.getItem('clickon_token')) {
+            window.location.href = 'login.html';
+        }
+    </script>
+</head>
+<body class="bg-black font-sans text-gray-200">
+
+    <header class="bg-zinc-900 border-b border-white/10">
+        <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-3xl font-extrabold text-white">Click<span class="text-accent">On</span></h1>
+            <a href="index.html" class="text-sm text-gray-400 hover:text-white">&larr; Kembali ke Beranda</a>
+        </nav>
+    </header>
+
+    <div class="min-h-screen flex items-center justify-center p-4">
+        
+        <div class="w-full max-w-2xl flex flex-col md:flex-row bg-zinc-900 border border-white/10 rounded-xl overflow-hidden">
+            
+            <div class="w-full md:w-1/2 bg-black/50 p-8">
+                <h2 class="text-2xl font-bold text-white mb-6">Detail Pesanan Anda</h2>
+                <div id="order-details" class="space-y-4">
+                    <p class="text-gray-400">Memuat detail...</p>
+                    </div>
+            </div>
+
+            <div class="w-full md:w-1/2 p-8">
+                <h2 class="text-2xl font-bold text-white mb-6">Data Pembeli</h2>
+                <form id="payment-form">
+                    <div class="space-y-5">
+                        <div>
+                            <label for="name" class="block text-sm font-semibold text-gray-300 mb-2">Nama Lengkap</label>
+                            <input type="text" id="name" class="w-full px-4 py-3 bg-zinc-800 border border-white/20 rounded-lg text-white" readonly>
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-semibold text-gray-300 mb-2">Email (untuk E-Ticket)</label>
+                            <input type="email" id="email" class="w-full px-4 py-3 bg-zinc-800 border border-white/20 rounded-lg text-white" readonly>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-300 mb-2">Metode Pembayaran</label>
+                            <div class="p-3 bg-zinc-800 rounded-lg border border-white/20 text-white">
+                                Simulasi Pembayaran (Langsung Lunas)
+                            </div>
+                        </div>
+                        <div>
+                            <button id="pay-button" type="submit" class="w-full bg-accent text-black font-bold px-5 py-3 rounded-lg transition duration-300 hover:bg-accent-hover">
+                                Bayar Sekarang
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Ambil data user dari localStorage
+        const user = JSON.parse(localStorage.getItem('clickon_user'));
+        const token = localStorage.getItem('clickon_token');
+
+        // Ambil event_id dari URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const eventId = urlParams.get('event_id');
+
+        // Fungsi format Rupiah
+        function formatRupiah(angka) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(angka);
+        }
+
+        // 1. Saat halaman dimuat, ambil detail event
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!eventId) {
+                alert('Event ID tidak ditemukan!');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Isi form data pembeli
+            document.getElementById('name').value = user.fullName;
+            document.getElementById('email').value = user.email;
+
+            // Ambil detail event dari API
+            const detailsContainer = document.getElementById('order-details');
+            try {
+                const response = await fetch(`http://localhost:3000/events/${eventId}`);
+                if (!response.ok) throw new Error('Gagal mengambil detail event.');
+                const event = await response.json();
+
+                // Masukkan data ke HTML
+                detailsContainer.innerHTML = `
+                    <p class="text-gray-400">Anda memesan:</p>
+                    <h3 class="text-xl font-semibold text-white">${event.title}</h3>
+                    <p class="text-gray-300">Kategori: <span class="text-white font-medium">${event.default_category}</span></p>
+                    <p class="text-gray-300">Jumlah: <span class="text-white font-medium">1 Tiket</span></p>
+                    <hr class="border-white/10 my-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-lg text-gray-300">Total Pembayaran:</span>
+                        <span class="text-2xl font-bold text-accent">${formatRupiah(event.price)}</span>
+                    </div>
+                `;
+            } catch (error) {
+                detailsContainer.innerHTML = `<p class="text-red-500">${error.message}</p>`;
+            }
+        });
+
+        // 2. Saat form disubmit, panggil API /checkout
+        document.getElementById('payment-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const payButton = document.getElementById('pay-button');
+            payButton.disabled = true;
+            payButton.innerHTML = 'Memproses...';
+
+            try {
+                const response = await fetch('http://localhost:3000/checkout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` // Kirim token untuk autentikasi
+                    },
+                    body: JSON.stringify({ eventId: eventId })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Gagal membuat tiket.');
+                }
+
+                // BERHASIL! Simpan data tiket baru ke sessionStorage
+                // agar halaman 'sukses.html' bisa membacanya
+                sessionStorage.setItem('newTicket', JSON.stringify(data.ticket));
+                
+                // Arahkan ke halaman sukses
+                window.location.href = 'sukses.html';
+
+            } catch (error) {
+                alert(error.message);
+                payButton.disabled = false;
+                payButton.innerHTML = 'Bayar Sekarang';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - ClickOn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 'sans': ['Inter', 'ui-sans-serif', 'system-ui'] },
+                    colors: { accent: { DEFAULT: '#14b8a6', hover: '#0d9488' } }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+    if (sessionStorage.getItem('isLoggedIn') === 'true') {
+        window.location.href = 'index.html';
+    }
+</script>
+
+<script>
+    // Cek jika SUDAH ADA token, lempar ke index
+    if (localStorage.getItem('clickon_token')) {
+        window.location.href = 'index.html';
+    }
+</script>
+    </head>
+<body class="bg-black font-sans text-gray-200">
+
+    <div class="min-h-screen flex items-center justify-center p-4">
+        
+        <div class="w-full max-w-md bg-zinc-900 border border-white/10 rounded-xl p-8 md:p-10">
+            
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-extrabold text-white mb-2">
+                    Click<span class="text-accent">On</span>
+                </h1>
+                <p class="text-lg text-gray-400">Masuk untuk melanjutkan</p>
+            </div>
+
+            <form id="login-form">
+                <div class="space-y-6">
+                    
+                    <div>
+                        <label for="email" class="block text-sm font-semibold text-gray-300 mb-2">Alamat Email</label>
+                        <input 
+                            type="email" id="email" name="email" 
+                            placeholder="anda@email.com"
+                            class="w-full px-4 py-3 bg-zinc-800 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                            required
+                        >
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-baseline">
+                            <label for="password" class="block text-sm font-semibold text-gray-300 mb-2">Password</label>
+                            <a href="#" class="text-sm font-medium text-accent/80 hover:text-accent">Lupa password?</a>
+                        </div>
+                        <input 
+                            type="password" id="password" name="password" 
+                            placeholder="••••••••"
+                            class="w-full px-4 py-3 bg-zinc-800 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                            required
+                        >
+                    </div>
+
+                    <div>
+                        <button 
+                            type="submit" 
+                            class="w-full bg-accent text-black font-bold px-5 py-3 rounded-lg transition duration-300 hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-black"
+                        >
+                            Login
+                        </button>
+                    </div>
+
+                </div>
+            </form>
+
+            <div class="mt-8 text-center">
+                <p class="text-gray-400">
+                    Belum punya akun? 
+                    <a href="register.html" class="font-semibold text-accent hover:text-accent/80">
+                        Daftar di sini
+                    </a>
+                </p>
+            </div>
+            
+            </div>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async function(event) {
+            // Mencegah form mengirim data (refresh)
+            event.preventDefault(); 
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const loginButton = this.querySelector('button[type="submit"]');
+
+            // Tampilkan loading
+            loginButton.disabled = true;
+            loginButton.innerHTML = 'Memproses...';
+
+            try {
+                // 1. Panggil API Backend kita
+                const response = await fetch('http://localhost:3000/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email: email, password: password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    // Jika server membalas dengan error (cth: 401 Gagal Login)
+                    throw new Error(data.message || 'Login gagal.');
+                }
+
+                // 2. Jika BERHASIL, simpan TOKEN (bukan 'true' lagi)
+                // Kita gunakan localStorage agar login bertahan walau browser ditutup
+                localStorage.setItem('clickon_token', data.token);
+                localStorage.setItem('clickon_user', JSON.stringify(data.user));
+                
+                // 3. Arahkan pengguna ke halaman beranda
+                window.location.href = 'index.html';
+
+            } catch (error) {
+                // Tampilkan pesan error jika gagal
+                alert(error.message);
+                loginButton.disabled = false;
+                loginButton.innerHTML = 'Login';
+            }
+        });
+
+        // Cek jika sudah login, lempar ke index
+        if (localStorage.getItem('clickon_token')) {
+            window.location.href = 'index.html';
+        }
+    </script>
+    </body>
+</html>

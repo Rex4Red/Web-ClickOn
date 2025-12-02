@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrasi - ClickOn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 'sans': ['Inter', 'ui-sans-serif', 'system-ui'] },
+                    colors: { accent: { DEFAULT: '#14b8a6', hover: '#0d9488' } }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="bg-black font-sans text-gray-200">
+
+    <div class="min-h-screen flex items-center justify-center p-4">
+        
+        <div class="w-full max-w-md bg-zinc-900 border border-white/10 rounded-xl p-8 md:p-10">
+            
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-extrabold text-white mb-2">
+                    Click<span class="text-accent">On</span>
+                </h1>
+                <p class="text-lg text-gray-400">Buat Akun Baru</p>
+            </div>
+
+            <form id="register-form">
+                <div class="space-y-6">
+                    
+                    <div>
+                        <label for="full_name" class="block text-sm font-semibold text-gray-300 mb-2">Nama Lengkap</label>
+                        <input 
+                            type="text" id="full_name" name="full_name" 
+                            placeholder="Nama Anda"
+                            class="w-full px-4 py-3 bg-zinc-800 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                            required
+                        >
+                    </div>
+                    
+                    <div>
+                        <label for="email" class.block text-sm font-semibold text-gray-300 mb-2">Alamat Email</label>
+                        <input 
+                            type="email" id="email" name="email" 
+                            placeholder="anda@email.com"
+                            class="w-full px-4 py-3 bg-zinc-800 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                            required
+                        >
+                    </div>
+
+                    <div>
+                        <label for="password" class="block text-sm font-semibold text-gray-300 mb-2">Password</Slabel>
+                        <input 
+                            type="password" id="password" name="password" 
+                            placeholder="••••••••"
+                            class="w-full px-4 py-3 bg-zinc-800 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                            required
+                        >
+                    </div>
+
+                    <div>
+                        <button 
+                            type="submit" 
+                            class="w-full bg-accent text-black font-bold px-5 py-3 rounded-lg transition duration-300 hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-black"
+                        >
+                            Daftar
+                        </button>
+                    </div>
+
+                </div>
+            </form>
+
+            <div class="mt-8 text-center">
+                <p class="text-gray-400">
+                    Sudah punya akun? 
+                    <a href="login.html" class="font-semibold text-accent hover:text-accent/80">
+                        Login di sini
+                    </a>
+                </p>
+            </div>
+            
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('register-form').addEventListener('submit', async function(event) {
+            event.preventDefault(); 
+            
+            const full_name = document.getElementById('full_name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const registerButton = this.querySelector('button[type="submit"]');
+
+            registerButton.disabled = true;
+            registerButton.innerHTML = 'Memproses...';
+
+            try {
+                // 1. Panggil API Backend /register
+                const response = await fetch('http://localhost:3000/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ full_name: full_name, email: email, password: password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Registrasi gagal.');
+                }
+
+                // 2. Jika BERHASIL, beri notifikasi dan arahkan ke login
+                alert('Registrasi berhasil! Silakan login dengan akun baru Anda.');
+                window.location.href = 'login.html';
+
+            } catch (error) {
+                // Tampilkan pesan error jika gagal (misal: email sudah terdaftar)
+                alert(error.message);
+                registerButton.disabled = false;
+                registerButton.innerHTML = 'Daftar';
+            }
+        });
+    </script>
+</body>
+</html>

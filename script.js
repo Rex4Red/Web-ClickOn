@@ -1,11 +1,9 @@
-/* script.js - Logika Terpusat ClickOn */
+/* script.js - Full Code dengan Error Handling Lebih Baik */
 
 const API_URL = "http://localhost:3000";
 
-// --- HELPERS ---
-function getAuth() {
-    const token = localStorage.getItem('clickon_token');
-    return token ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } : null;
+function formatRupiah(n) {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 }
 
 function logout() {
@@ -13,33 +11,24 @@ function logout() {
     window.location.href = 'index.html';
 }
 
-function formatRupiah(n) {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
-}
-
-// 1. LOGIKA NAVBAR (checkLoginNavbar)
 function checkLoginNavbar() {
     const authButton = document.getElementById('auth-button');
-    const navHistory = document.getElementById('nav-history');
-    if (!authButton) return;
-
+    const adminLink = document.getElementById('admin-link');
     const token = localStorage.getItem('clickon_token');
     const userStr = localStorage.getItem('clickon_user');
 
+    if (!authButton) return;
+
     if (token && userStr) {
         const user = JSON.parse(userStr);
-        
-        // Tampilkan Menu Riwayat
-        if (navHistory) navHistory.classList.remove('hidden');
-
-        // Logic Tombol Auth
         if (user.role === 'admin' || user.role === 'panitia') {
+            if(adminLink) adminLink.classList.remove('hidden');
             authButton.textContent = 'Dashboard Admin';
             authButton.href = 'admin.html';
             authButton.classList.remove('bg-accent', 'text-black');
             authButton.classList.add('bg-zinc-800', 'text-white', 'border', 'border-white/20');
         } else {
-            authButton.textContent = `Logout (${user.full_name || user.fullName || 'User'})`;
+            authButton.textContent = `Logout (${user.full_name || 'User'})`;
             authButton.classList.remove('bg-accent', 'text-black');
             authButton.classList.add('bg-red-600', 'text-white', 'hover:bg-red-700');
             authButton.onclick = (e) => { e.preventDefault(); logout(); };
@@ -47,269 +36,230 @@ function checkLoginNavbar() {
     }
 }
 
-// 2. LOAD KONSER (INDEX) - Support Sold Out
 async function loadConcerts() {
     const grid = document.getElementById('concert-grid');
-    if (!grid) return;
+    if (!grid) return; 
 
     try {
         const res = await fetch(`${API_URL}/events`);
         const events = await res.json();
         grid.innerHTML = '';
 
-        if (!events.length) return grid.innerHTML = '<p class="col-span-full text-center text-gray-500">Belum ada konser.</p>';
+        if (!events.length) return grid.innerHTML = '<p class="col-span-full text-center text-gray-500 py-10">Belum ada konser.</p>';
 
         events.forEach(event => {
-            const date = new Date(event.event_date).toLocaleDateString('id-ID');
-            // Cek Status Sold Out
-            let btnAction = `<a href="checkout.html?event_id=${event.id}" class="w-full mt-auto block text-center bg-accent text-black font-bold px-5 py-2.5 rounded-lg transition duration-300 hover:bg-accent-hover">Beli Tiket</a>`;
-            let statusBadge = `<div class="absolute top-4 right-4 bg-black/70 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-white border border-white/10">${event.default_category}</div>`;
-            
+            const date = new Date(event.event_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+            let actionBtn = `<button onclick="buyTicket(${event.id})" class="w-full mt-4 block text-center bg-accent text-black font-bold py-3 rounded-lg transition duration-300 hover:bg-accent-hover">Beli Tiket</button>`;
+            let badgeClass = "bg-black/70 text-white";
+            let badgeText = event.default_category;
+
             if (event.status === 'sold_out') {
-                btnAction = `<button disabled class="w-full mt-auto block text-center bg-zinc-700 text-gray-500 font-bold px-5 py-2.5 rounded-lg cursor-not-allowed border border-white/5">SOLD OUT</button>`;
-                statusBadge = `<div class="absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">SOLD OUT</div>`;
+                actionBtn = `<button disabled class="w-full mt-4 block text-center bg-zinc-800 text-gray-500 font-bold py-3 rounded-lg cursor-not-allowed border border-white/10">SOLD OUT</button>`;
+                badgeClass = "bg-red-600 text-white shadow-lg";
+                badgeText = "SOLD OUT";
             }
 
-            const img = event.image_url || 'https://images.unsplash.com/photo-1459749411177-d4a428c37ae5?auto=format&fit=crop&q=80&w=800';
+            // Fallback Image
+            const imgUrl = (event.image_url && event.image_url.length > 10) 
+                ? event.image_url 
+                : 'https://images.unsplash.com/photo-1459749411177-d4a428c37ae5?auto=format&fit=crop&q=80&w=800';
 
             grid.innerHTML += `
-                <div class="bg-black rounded-xl overflow-hidden flex flex-col border border-white/10 transition-all duration-300 hover:border-accent/70 hover:shadow-lg hover:shadow-accent/10 group">
-                    <div class="w-full h-48 bg-zinc-800 relative overflow-hidden">
-                        <img src="${img}" class="w-full h-full object-cover transition transform group-hover:scale-110 duration-500">
-                        ${statusBadge}
+                <div class="bg-zinc-900 rounded-xl overflow-hidden flex flex-col border border-white/10 transition-all duration-300 hover:border-accent/50 hover:shadow-lg group h-full">
+                    <div class="w-full h-56 bg-zinc-800 relative overflow-hidden">
+                        <img src="${imgUrl}" class="w-full h-full object-cover transition transform group-hover:scale-110 duration-700">
+                        <div class="absolute top-4 right-4 ${badgeClass} backdrop-blur px-3 py-1 rounded-full text-xs font-bold border border-white/10">${badgeText}</div>
                     </div>
-                    <div class="p-6 flex-1 flex flex-col flex-grow">
-                        <h3 class="text-xl font-semibold mb-2 text-white line-clamp-2">${event.title}</h3>
-                        <p class="text-gray-400 text-sm mb-1 flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                            ${event.venue}
-                        </p>
-                        <p class="text-gray-400 text-sm mb-4 flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                            ${date}
-                        </p>
-                        <div class="mt-auto pt-4 border-t border-white/10 flex justify-between items-center">
-                            <p class="text-accent text-lg font-bold">${formatRupiah(event.price)}</p>
-                            ${btnAction}
+                    <div class="p-6 flex-1 flex flex-col">
+                        <h3 class="text-xl font-bold text-white mb-2 line-clamp-1">${event.title}</h3>
+                        <p class="text-gray-400 text-sm mb-1">📍 ${event.venue}</p>
+                        <p class="text-gray-400 text-sm mb-4">📅 ${date}</p>
+                        <div class="mt-auto pt-4 border-t border-white/10">
+                            <p class="text-xs text-gray-500 uppercase font-bold mb-1">Harga Mulai</p>
+                            <p class="text-accent text-2xl font-bold">${formatRupiah(event.price)}</p>
+                            ${actionBtn}
                         </div>
                     </div>
                 </div>
             `;
         });
-    } catch (e) {
-        grid.innerHTML = `<p class="col-span-full text-center text-red-500">Gagal memuat: ${e.message}</p>`;
-    }
+    } catch (e) { grid.innerHTML = `<p class="col-span-full text-center text-red-500">Gagal memuat data.</p>`; }
 }
 
-// 3. LOAD HISTORY (USER)
-async function loadUserHistory() {
-    const container = document.getElementById('ticket-list');
-    if (!container) return;
-
-    const headers = getAuth();
-    if (!headers) return window.location.href = 'login.html';
+async function buyTicket(eventId) {
+    const token = localStorage.getItem('clickon_token');
+    if (!token) return window.location.href = 'login.html';
+    if (!confirm("Beli tiket ini?")) return;
 
     try {
-        const res = await fetch(`${API_URL}/tickets/history`, { headers });
-        if (res.status === 401) return logout();
-        
-        const tickets = await res.json();
-        container.innerHTML = '';
-
-        if (!tickets || tickets.length === 0) {
-            container.innerHTML = `<div class="col-span-full text-center py-12 bg-zinc-900/50 rounded-xl border border-white/10"><p class="text-gray-400 mb-2">Anda belum memiliki tiket.</p><a href="index.html" class="text-accent hover:underline">Beli Sekarang</a></div>`;
-            return;
-        }
-
-        tickets.forEach(t => {
-            const valid = t.status === 'paid';
-            const statusBadge = valid 
-                ? '<span class="text-green-400 bg-green-500/10 px-2 py-1 rounded text-xs border border-green-500/30">BERLAKU</span>'
-                : '<span class="text-red-500 bg-red-500/10 px-2 py-1 rounded text-xs border border-red-500/30">SUDAH DIPAKAI</span>';
-            const opacity = valid ? '' : 'opacity-60 grayscale';
-            const qr = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${t.ticket_code}`;
-
-            container.innerHTML += `
-                <div class="bg-zinc-900 border border-white/10 rounded-xl flex overflow-hidden ${opacity}">
-                    <div class="p-5 flex-1">
-                        <h4 class="text-white font-bold text-lg mb-1">${t.event_title || t.title}</h4>
-                        <p class="text-gray-400 text-sm mb-3">${t.venue} • ${new Date(t.event_date).toLocaleDateString()}</p>
-                        <div class="text-xs bg-black p-1.5 rounded font-mono text-gray-300 inline-block mb-3 border border-white/5">${t.ticket_code}</div>
-                        <div>${statusBadge}</div>
-                    </div>
-                    <div class="bg-white p-3 flex items-center justify-center w-36 border-l border-white/10">
-                        <img src="${qr}" class="w-full mix-blend-multiply">
-                    </div>
-                </div>
-            `;
+        const res = await fetch(`${API_URL}/checkout`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ eventId: eventId })
         });
-    } catch (e) {
-        container.innerHTML = `<p class="col-span-full text-center text-red-500">Gagal memuat history.</p>`;
-    }
+        const data = await res.json();
+        if (res.ok) alert(`✅ Berhasil! Kode: ${data.ticket.ticketCode}`);
+        else alert(`❌ Gagal: ${data.message}`);
+    } catch (err) { alert("Error koneksi."); }
 }
 
-// 4. ADMIN: MANAJEMEN EVENT
+// ADMIN LOGIC
 async function loadAdminEvents() {
-    const tbody = document.getElementById('admin-event-list');
-    if (!tbody) return;
-    const headers = getAuth();
-    if (!headers) return;
+    const tbody = document.getElementById('events-table-body');
+    if (!tbody) return; 
 
     try {
         const res = await fetch(`${API_URL}/events`);
         const events = await res.json();
-        tbody.innerHTML = '';
+        tbody.innerHTML = ''; 
 
-        if (!events.length) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">Belum ada event.</td></tr>';
-            return;
-        }
+        if (!events.length) return tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-gray-500">Belum ada data.</td></tr>';
 
         events.forEach(ev => {
-            const isSold = ev.status === 'sold_out';
-            const statusColor = isSold ? 'text-red-500' : 'text-green-500';
-            const toggleAction = isSold ? 'available' : 'sold_out';
-            const toggleText = isSold ? 'Set Available' : 'Set Sold Out';
-
+            const isSoldOut = ev.status === 'sold_out';
+            const statusBadge = isSoldOut 
+                ? '<span class="text-red-500 bg-red-500/10 px-2 py-1 rounded text-xs border border-red-500/30">SOLD OUT</span>'
+                : '<span class="text-green-500 bg-green-500/10 px-2 py-1 rounded text-xs border border-green-500/30">AVAILABLE</span>';
+            const nextStatus = isSoldOut ? 'available' : 'sold_out';
+            const btnText = isSoldOut ? 'Buka' : 'Tutup';
+            
             tbody.innerHTML += `
-                <tr class="border-b border-white/5 hover:bg-white/5">
-                    <td class="px-6 py-4 font-bold text-white">${ev.title}</td>
-                    <td class="px-6 py-4 text-gray-400">${new Date(ev.event_date).toLocaleDateString()}</td>
-                    <td class="px-6 py-4 font-bold ${statusColor}">${(ev.status || 'available').toUpperCase()}</td>
-                    <td class="px-6 py-4 text-right space-x-2">
-                        <button onclick="toggleStatus(${ev.id}, '${toggleAction}')" class="text-xs border border-white/20 px-2 py-1 rounded hover:bg-white/10 text-gray-300 uppercase">${toggleText}</button>
-                        <button onclick="deleteEvent(${ev.id})" class="text-xs bg-red-600/10 text-red-500 px-2 py-1 rounded hover:bg-red-600 hover:text-white uppercase">Hapus</button>
+                <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                    <td class="p-4 text-gray-500 text-sm">#${ev.id}</td>
+                    <td class="p-4 font-bold text-white">${ev.title}</td>
+                    <td class="p-4 text-gray-400 text-sm">${new Date(ev.event_date).toLocaleDateString()}</td>
+                    <td class="p-4 text-gray-400 text-sm">${ev.venue}</td>
+                    <td class="p-4 text-accent font-mono">${formatRupiah(ev.price)}</td>
+                    <td class="p-4">${statusBadge}</td>
+                    <td class="p-4 text-right flex justify-end gap-2">
+                        <button onclick="toggleEventStatus(${ev.id}, '${nextStatus}')" class="border border-white/20 text-gray-300 hover:text-white px-3 py-1 rounded text-xs transition uppercase font-bold">${btnText}</button>
+                        <button onclick="deleteEvent(${ev.id})" class="bg-red-600/10 border border-red-600 text-red-500 hover:bg-red-600 hover:text-white px-3 py-1 rounded text-xs transition uppercase font-bold">Hapus</button>
                     </td>
                 </tr>
             `;
         });
-    } catch (e) { console.error(e); }
+    } catch (err) { console.error(err); }
 }
 
 async function deleteEvent(id) {
-    if (!confirm('Yakin ingin menghapus event ini?')) return;
+    const token = localStorage.getItem('clickon_token');
+    if(!confirm("⚠️ Hapus event ini permanen?")) return;
     try {
-        const res = await fetch(`${API_URL}/events/${id}`, { method: 'DELETE', headers: getAuth() });
-        const d = await res.json();
-        if (res.ok) { alert(d.message); loadAdminEvents(); loadDashboardStats(); }
-        else alert(d.message);
-    } catch (e) { alert('Error koneksi.'); }
+        const res = await fetch(`${API_URL}/events/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) { alert("Terhapus!"); loadAdminEvents(); }
+        else { const d = await res.json(); alert(d.message); }
+    } catch (e) { alert("Error koneksi."); }
 }
 
-async function toggleStatus(id, status) {
+async function toggleEventStatus(id, status) {
+    const token = localStorage.getItem('clickon_token');
     try {
-        await fetch(`${API_URL}/events/${id}/status`, { 
-            method: 'PATCH', 
-            headers: getAuth(), 
-            body: JSON.stringify({ status }) 
+        await fetch(`${API_URL}/events/${id}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ status })
         });
         loadAdminEvents();
-    } catch (e) { alert('Error koneksi.'); }
+    } catch (e) { alert('Error.'); }
 }
 
-// 5. OTHER (Merch, Dashboard, Checkin)
-async function loadEventsToDropdown() {
-    const dropdown = document.getElementById('eventSelect');
-    if (!dropdown) return;
-    try {
-        const res = await fetch(`${API_URL}/events`);
-        const events = await res.json();
-        events.forEach(e => {
-            const opt = document.createElement('option');
-            opt.value = e.id;
-            opt.text = e.title;
-            dropdown.add(opt);
-        });
-    } catch (e) {}
-}
+// CONVERT FILE TO BASE64
+const toBase64 = file => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+});
 
-async function loadMerchandise(eventId) {
-    const container = document.getElementById('merchList');
-    if (!container || !eventId) return;
-    container.innerHTML = '<p class="text-center col-span-full text-gray-500">Memuat...</p>';
-    try {
-        const res = await fetch(`${API_URL}/events/${eventId}/merchandise`);
-        const items = await res.json();
-        container.innerHTML = '';
-        if (!items.length) return container.innerHTML = '<p class="text-center col-span-full text-gray-500">Kosong.</p>';
-        items.forEach(item => {
-            container.innerHTML += `
-                <div class="bg-zinc-900 border border-white/10 rounded-xl p-4 hover:border-accent/50 transition">
-                    <h4 class="text-white font-bold text-lg">${item.item_name}</h4>
-                    <p class="text-accent font-bold text-xl mb-2">${formatRupiah(item.price)}</p>
-                    <p class="text-xs text-gray-500 mb-3">Stok: ${item.stock}</p>
-                    <button onclick="buyMerch(${item.id})" class="w-full bg-white text-black font-bold py-2 rounded hover:bg-gray-200">Beli</button>
-                </div>`;
-        });
-    } catch (e) { container.innerHTML = '<p class="text-red-500">Gagal memuat.</p>'; }
-}
-
-async function buyMerch(id) {
-    const token = localStorage.getItem('clickon_token');
-    if (!token) return alert('Login dulu.');
-    const qty = prompt("Jumlah:", "1");
-    if (!qty) return;
-    try {
-        const res = await fetch(`${API_URL}/merchandise/buy`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ merchandiseId: id, quantity: parseInt(qty) })
-        });
-        const d = await res.json();
-        if (res.ok) { alert("Sukses!"); loadMerchandise(document.getElementById('eventSelect').value); }
-        else alert(d.message);
-    } catch (e) { alert("Error."); }
-}
-
-async function loadDashboardStats() {
-    if (!document.getElementById('totalTicketSold')) return;
-    const headers = getAuth();
-    if (!headers) return;
-    try {
-        const res = await fetch(`${API_URL}/admin/dashboard/summary`, { headers });
-        const d = await res.json();
-        if(res.ok) {
-            document.getElementById('totalTicketSold').innerText = d.ticketSales.count;
-            document.getElementById('totalTicketRev').innerText = formatRupiah(d.ticketSales.revenue);
-            document.getElementById('totalUsers').innerText = d.audience.registeredUsers;
-        }
-    } catch (e) {}
-}
-
-const addForm = document.getElementById('addEventForm');
-if(addForm) {
-    addForm.addEventListener('submit', async (e) => {
+// ADD EVENT LOGIC
+const addEventForm = document.getElementById('addEventForm');
+if (addEventForm) {
+    addEventForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const headers = getAuth();
-        const body = {
+        const token = localStorage.getItem('clickon_token'); 
+        
+        // Disable tombol biar ga diklik 2x
+        const btnSubmit = e.target.querySelector('button[type="submit"]');
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = "Menyimpan...";
+
+        // Handle Image
+        const fileInput = document.getElementById('eventImageFile');
+        let imageBase64 = "";
+        
+        if (fileInput.files.length > 0) {
+            try {
+                // Batasi ukuran di client juga (misal 5MB peringatan)
+                if(fileInput.files[0].size > 5 * 1024 * 1024) {
+                    if(!confirm("Gambar cukup besar (>5MB), proses mungkin agak lama. Lanjut?")) {
+                        btnSubmit.disabled = false; btnSubmit.textContent = "Simpan";
+                        return;
+                    }
+                }
+                imageBase64 = await toBase64(fileInput.files[0]);
+            } catch (err) {
+                alert("Gagal memproses gambar.");
+                btnSubmit.disabled = false; btnSubmit.textContent = "Simpan";
+                return;
+            }
+        }
+
+        const data = {
             title: document.getElementById('eventTitle').value,
             venue: document.getElementById('eventVenue').value,
             event_date: document.getElementById('eventDate').value,
             price: document.getElementById('eventPrice').value,
-            description: document.getElementById('eventDesc').value
+            description: document.getElementById('eventDesc').value,
+            image_url: imageBase64 
         };
-        await fetch(`${API_URL}/events`, { method: 'POST', headers, body: JSON.stringify(body) });
-        alert('Event Ditambahkan');
-        loadAdminEvents();
+
+        try {
+            const res = await fetch(`${API_URL}/events`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(data)
+            });
+
+            // Cek Status Response
+            if (res.ok) {
+                alert('Berhasil!');
+                closeModal('eventModal'); 
+                loadAdminEvents();
+                addEventForm.reset();
+            } else {
+                // Jika error 413 (Payload Too Large) biasanya response HTML/Text, bukan JSON
+                if (res.status === 413) {
+                    alert("Gagal: Gambar terlalu besar! (Maks 50MB)");
+                } else {
+                    const errJson = await res.json();
+                    alert('Gagal: ' + (errJson.message || res.statusText));
+                }
+            }
+        } catch (err) { 
+            console.error(err);
+            alert('Error koneksi atau Server Down.'); 
+        } finally {
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = "Simpan";
+        }
     });
 }
 
 async function validateTicket() {
-    const code = document.getElementById('checkinCode').value;
-    const resBox = document.getElementById('checkinResult');
-    const headers = getAuth();
-    if(!code) return alert('Input Kode!');
+    const code = document.getElementById('ticketCodeInput').value;
+    const token = localStorage.getItem('clickon_token');
+    const resultDiv = document.getElementById('validationResult');
+    if(!code) return alert("Input kode!");
     try {
-        const res = await fetch(`${API_URL}/tickets/validate`, { method: 'POST', headers, body: JSON.stringify({ ticketCode: code }) });
+        const res = await fetch(`${API_URL}/tickets/validate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ ticketCode: code })
+        });
         const d = await res.json();
-        resBox.classList.remove('hidden', 'bg-green-500/20', 'text-green-400', 'bg-red-500/20', 'text-red-400');
-        resBox.style.display = 'block';
-        if(d.valid) {
-            resBox.classList.add('bg-green-500/20', 'text-green-400');
-            resBox.innerHTML = `✅ VALID: ${d.owner}`;
-        } else {
-            resBox.classList.add('bg-red-500/20', 'text-red-400');
-            resBox.innerHTML = `❌ ${d.message}`;
-        }
-    } catch (e) { alert("Error koneksi."); }
+        resultDiv.innerHTML = res.ok ? `<span class="text-accent">✅ ${d.message}</span>` : `<span class="text-red-500">❌ ${d.message}</span>`;
+    } catch(e) {}
 }

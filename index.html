@@ -26,8 +26,8 @@
             <ul class="hidden md:flex space-x-6 items-center">
                 <li><a href="index.html" class="font-semibold text-white">Beranda</a></li>
                 <li><a href="index.html#concerts" class="font-semibold text-gray-300 hover:text-white">Konser</a></li>
-                <li><a href="merchandise.html" class="font-semibold text-gray-300 hover:text-white">Merchandise</a></li>
-                <li><a href="history.html" id="nav-history" class="hidden font-semibold text-gray-300 hover:text-white border-b-2 border-accent">Riwayat</a></li>
+                <li><a href="#" class="font-semibold text-gray-300 hover:text-white">Merchandise</a></li>
+                <li id="admin-link" class="hidden"><a href="admin.html" class="font-semibold text-accent hover:text-white border border-accent rounded px-2 py-1">Dashboard</a></li>
                 
                 <li><a id="auth-button" href="login.html" class="bg-accent text-black font-bold px-5 py-2 rounded-lg transition duration-300 hover:bg-accent-hover">
                     Login/Daftar
@@ -73,10 +73,9 @@
 
     <script src="script.js"></script>
     <script>
-        // Init Halaman Index
         document.addEventListener('DOMContentLoaded', () => {
-            checkLoginNavbar(); // Cek login untuk navbar
-            loadConcerts();     // Load data konser
+            checkLoginNavbar(); 
+            loadConcerts();     
         });
     </script>
 </body>

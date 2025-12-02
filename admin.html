@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - ClickOn</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config = { theme: { extend: { fontFamily: { 'sans': ['Inter'] }, colors: { accent: { DEFAULT: '#14b8a6', hover: '#0d9488' } } } } }</script>
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { 'sans': ['Inter'] }, colors: { accent: { DEFAULT: '#14b8a6', hover: '#0d9488' } } } } }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="bg-black font-sans text-gray-200 flex h-screen overflow-hidden">
@@ -15,6 +17,7 @@
         <ul class="space-y-2 flex-1">
             <li><button onclick="switchTab('dashboard')" class="nav-item w-full text-left px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 hover:text-white font-medium transition active-nav bg-accent/10 text-accent">📊 Dashboard</button></li>
             <li><button onclick="switchTab('events')" class="nav-item w-full text-left px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 hover:text-white font-medium transition">🎵 Manajemen Event</button></li>
+            <li><button onclick="switchTab('merch')" class="nav-item w-full text-left px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 hover:text-white font-medium transition">👕 Merchandise</button></li>
             <li><button onclick="switchTab('scanner')" class="nav-item w-full text-left px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 hover:text-white font-medium transition">📱 Scan Tiket</button></li>
         </ul>
         <button onclick="logoutAdmin()" class="mt-auto w-full border border-red-500 text-red-500 py-2 rounded-lg hover:bg-red-500 hover:text-white transition font-bold">Logout</button>
@@ -25,9 +28,18 @@
 
         <div id="tab-dashboard" class="tab-content">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-                <div class="bg-zinc-900 p-6 rounded-xl border border-white/5"><h3 class="text-gray-400 text-sm font-medium mb-1">Total Penjualan</h3><div class="text-2xl font-bold text-white">Rp 125.5jt</div></div>
-                <div class="bg-zinc-900 p-6 rounded-xl border border-white/5"><h3 class="text-gray-400 text-sm font-medium mb-1">Tiket Terjual</h3><div class="text-2xl font-bold text-white">1,240</div></div>
-                <div class="bg-zinc-900 p-6 rounded-xl border border-white/5"><h3 class="text-gray-400 text-sm font-medium mb-1">Total Event</h3><div class="text-2xl font-bold text-white">8</div></div>
+                <div class="bg-zinc-900 p-6 rounded-xl border border-white/5">
+                    <h3 class="text-gray-400 text-sm font-medium mb-1">Total Penjualan</h3>
+                    <div id="stat-revenue" class="text-2xl font-bold text-white">Rp 0</div> </div>
+                <div class="bg-zinc-900 p-6 rounded-xl border border-white/5">
+                    <h3 class="text-gray-400 text-sm font-medium mb-1">Tiket Terjual</h3>
+                    <div id="stat-tickets" class="text-2xl font-bold text-white">0</div> </div>
+                <div class="bg-zinc-900 p-6 rounded-xl border border-white/5">
+                    <h3 class="text-gray-400 text-sm font-medium mb-1">Total Event</h3>
+                    <div id="stat-events" class="text-2xl font-bold text-white">0</div> </div>
+                <div class="bg-zinc-900 p-6 rounded-xl border border-white/5">
+                    <h3 class="text-gray-400 text-sm font-medium mb-1">Total Stok Merch</h3>
+                    <div id="stat-merch" class="text-2xl font-bold text-white">0</div> </div>
             </div>
         </div>
 
@@ -41,9 +53,7 @@
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="text-gray-500 border-b border-white/10 text-sm uppercase">
-                                <th class="p-4 font-semibold">ID</th>
                                 <th class="p-4 font-semibold">Nama Event</th>
-                                <th class="p-4 font-semibold">Tanggal</th>
                                 <th class="p-4 font-semibold">Venue</th>
                                 <th class="p-4 font-semibold">Harga</th>
                                 <th class="p-4 font-semibold">Status</th>
@@ -51,6 +61,29 @@
                             </tr>
                         </thead>
                         <tbody id="events-table-body" class="text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-merch" class="tab-content hidden">
+            <div class="bg-zinc-900 rounded-xl border border-white/5 p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-white">Daftar Merchandise</h3>
+                    <button onclick="openModal('merchModal'); loadEventsForSelect();" class="bg-accent hover:bg-accent-hover text-black font-bold py-2 px-4 rounded-lg text-sm">+ Tambah Barang</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-gray-500 border-b border-white/10 text-sm uppercase">
+                                <th class="p-4 font-semibold">Produk</th>
+                                <th class="p-4 font-semibold">Event Terkait</th>
+                                <th class="p-4 font-semibold">Harga</th>
+                                <th class="p-4 font-semibold">Stok</th>
+                                <th class="p-4 font-semibold text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="merch-table-body" class="text-sm"></tbody>
                     </table>
                 </div>
             </div>
@@ -70,23 +103,42 @@
         <div class="bg-zinc-900 p-8 rounded-2xl border border-white/10 w-full max-w-lg overflow-y-auto max-h-[90vh]">
             <h3 class="text-2xl font-bold text-white mb-6">Tambah Event Baru</h3>
             <form id="addEventForm" class="space-y-4">
-                <div><label class="block text-gray-400 text-xs mb-1">Judul</label><input type="text" id="eventTitle" class="w-full bg-black border border-zinc-700 p-2 rounded text-white focus:border-accent outline-none" required></div>
-                <div><label class="block text-gray-400 text-xs mb-1">Venue</label><input type="text" id="eventVenue" class="w-full bg-black border border-zinc-700 p-2 rounded text-white focus:border-accent outline-none" required></div>
+                <div><label class="block text-gray-400 text-xs mb-1">Judul</label><input type="text" id="eventTitle" class="w-full bg-black border border-zinc-700 p-2 rounded text-white" required></div>
+                <div><label class="block text-gray-400 text-xs mb-1">Venue</label><input type="text" id="eventVenue" class="w-full bg-black border border-zinc-700 p-2 rounded text-white" required></div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-gray-400 text-xs mb-1">Tanggal</label><input type="datetime-local" id="eventDate" class="w-full bg-black border border-zinc-700 p-2 rounded text-white focus:border-accent outline-none" required></div>
-                    <div><label class="block text-gray-400 text-xs mb-1">Harga (Rp)</label><input type="number" id="eventPrice" class="w-full bg-black border border-zinc-700 p-2 rounded text-white focus:border-accent outline-none" required></div>
+                    <div><label class="block text-gray-400 text-xs mb-1">Tanggal</label><input type="datetime-local" id="eventDate" class="w-full bg-black border border-zinc-700 p-2 rounded text-white" required></div>
+                    <div><label class="block text-gray-400 text-xs mb-1">Harga</label><input type="number" id="eventPrice" class="w-full bg-black border border-zinc-700 p-2 rounded text-white" required></div>
                 </div>
-                
-                <div>
-                    <label class="block text-gray-400 text-xs mb-1">Poster Konser (Upload)</label>
-                    <input type="file" id="eventImageFile" accept="image/*" class="w-full bg-black border border-zinc-700 p-2 rounded text-white focus:border-accent outline-none">
-                    <p class="text-xs text-gray-500 mt-1">*Maksimal 2MB disarankan</p>
-                </div>
-
-                <div><label class="block text-gray-400 text-xs mb-1">Deskripsi</label><textarea id="eventDesc" rows="3" class="w-full bg-black border border-zinc-700 p-2 rounded text-white focus:border-accent outline-none"></textarea></div>
+                <div><label class="block text-gray-400 text-xs mb-1">Poster</label><input type="file" id="eventImageFile" class="w-full bg-black border border-zinc-700 p-2 rounded text-white"></div>
+                <div><label class="block text-gray-400 text-xs mb-1">Deskripsi</label><textarea id="eventDesc" class="w-full bg-black border border-zinc-700 p-2 rounded text-white"></textarea></div>
                 <div class="flex justify-end space-x-3 mt-6">
-                    <button type="button" onclick="closeModal('eventModal')" class="px-4 py-2 text-gray-400 hover:text-white">Batal</button>
-                    <button type="submit" class="bg-accent text-black font-bold px-6 py-2 rounded-lg hover:bg-accent-hover">Simpan</button>
+                    <button type="button" onclick="closeModal('eventModal')" class="px-4 py-2 text-gray-400">Batal</button>
+                    <button type="submit" class="bg-accent text-black font-bold px-6 py-2 rounded-lg">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="merchModal" class="fixed inset-0 bg-black/80 hidden justify-center items-center z-50 backdrop-blur-sm">
+        <div class="bg-zinc-900 p-8 rounded-2xl border border-white/10 w-full max-w-lg">
+            <h3 class="text-2xl font-bold text-white mb-6">Tambah Merchandise</h3>
+            <form id="addMerchForm" class="space-y-4">
+                <div><label class="block text-gray-400 text-xs mb-1">Nama Barang</label><input type="text" id="merchName" class="w-full bg-black border border-zinc-700 p-2 rounded text-white" required></div>
+                <div>
+                    <label class="block text-gray-400 text-xs mb-1">Event Terkait (Opsional)</label>
+                    <select id="merchEventSelect" class="w-full bg-black border border-zinc-700 p-2 rounded text-white">
+                        <option value="">-- Umum / Tanpa Event --</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-gray-400 text-xs mb-1">Harga (Rp)</label><input type="number" id="merchPrice" class="w-full bg-black border border-zinc-700 p-2 rounded text-white" required></div>
+                    <div><label class="block text-gray-400 text-xs mb-1">Stok</label><input type="number" id="merchStock" class="w-full bg-black border border-zinc-700 p-2 rounded text-white" required></div>
+                </div>
+                <div><label class="block text-gray-400 text-xs mb-1">Foto Produk</label><input type="file" id="merchImageFile" class="w-full bg-black border border-zinc-700 p-2 rounded text-white"></div>
+                
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeModal('merchModal')" class="px-4 py-2 text-gray-400">Batal</button>
+                    <button type="submit" class="bg-accent text-black font-bold px-6 py-2 rounded-lg">Simpan</button>
                 </div>
             </form>
         </div>
@@ -101,12 +153,18 @@
             if (!token || (user.role !== 'admin' && user.role !== 'panitia')) {
                 alert('Akses ditolak.'); window.location.href = 'index.html'; return;
             }
+            
+            // Panggil Fungsi Load
+            loadDashboardStats(); // LOAD STATS
             loadAdminEvents();
+            loadMerchandise(); // LOAD MERCH
         });
+
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-            document.getElementById('page-title').innerText = tabId === 'events' ? 'Manajemen Event' : (tabId === 'scanner' ? 'Scan Tiket' : 'Dashboard Overview');
+            document.getElementById('page-title').innerText = tabId.toUpperCase();
+            
             document.querySelectorAll('.nav-item').forEach(el => { el.classList.remove('bg-accent/10', 'text-accent'); el.classList.add('text-gray-400'); });
             event.currentTarget.classList.add('bg-accent/10', 'text-accent'); event.currentTarget.classList.remove('text-gray-400');
         }

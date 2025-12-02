@@ -19,7 +19,15 @@
                 <li><a href="index.html" class="font-semibold text-gray-300 hover:text-white">Beranda</a></li>
                 <li><a href="index.html#concerts" class="font-semibold text-gray-300 hover:text-white">Konser</a></li>
                 <li><a href="merchandise.html" class="font-semibold text-gray-300 hover:text-white">Merchandise</a></li>
-                <li><a href="history.html" id="nav-history" class="hidden font-semibold text-white border-b-2 border-accent">Riwayat</a></li>
+                
+                <li id="nav-history" class="hidden">
+                    <a href="history.html" class="font-semibold text-white border-b-2 border-accent">Riwayat</a>
+                </li>
+                
+                <li id="admin-link" class="hidden">
+                    <a href="admin.html" class="font-semibold text-accent hover:text-white border border-accent rounded px-2 py-1">Dashboard</a>
+                </li>
+
                 <li><a id="auth-button" href="login.html" class="bg-accent text-black font-bold px-5 py-2 rounded-lg transition duration-300 hover:bg-accent-hover">Login/Daftar</a></li>
             </ul>
         </nav>
@@ -29,8 +37,10 @@
         <h2 class="text-3xl font-extrabold text-white mb-2">Tiket Saya</h2>
         <p class="text-gray-400 mb-8">Daftar tiket yang telah Anda beli. Tunjukkan QR Code saat masuk.</p>
 
-        <div id="ticket-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="col-span-full text-center py-20 text-gray-500 animate-pulse">Sedang memuat tiket Anda...</div>
+        <div id="history-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="col-span-full text-center py-20 text-gray-500 animate-pulse bg-zinc-900/50 rounded-xl border border-white/5">
+                Sedang memuat tiket Anda...
+            </div>
         </div>
     </div>
 
@@ -42,7 +52,13 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             checkLoginNavbar();
-            loadUserHistory();
+            // Pastikan fungsi ini ada di script.js Anda
+            if (typeof loadUserHistory === "function") {
+                loadUserHistory();
+            } else {
+                console.error("Fungsi loadUserHistory tidak ditemukan di script.js!");
+                document.getElementById('history-list').innerHTML = "<p class='text-red-500'>Error: Script belum update.</p>";
+            }
         });
     </script>
 </body>

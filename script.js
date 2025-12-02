@@ -1,7 +1,8 @@
-/* script.js - Full Code dengan Error Handling Lebih Baik */
+/* script.js - FINAL VERSION (User + Admin + Stats + Merch + Checkout Redirect) */
 
 const API_URL = "http://localhost:3000";
 
+// --- HELPERS ---
 function formatRupiah(n) {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 }
@@ -11,9 +12,12 @@ function logout() {
     window.location.href = 'index.html';
 }
 
+// --- 1. NAVIGASI & AUTH (Berjalan di semua halaman) ---
 function checkLoginNavbar() {
     const authButton = document.getElementById('auth-button');
     const adminLink = document.getElementById('admin-link');
+    const historyLink = document.getElementById('nav-history'); 
+    
     const token = localStorage.getItem('clickon_token');
     const userStr = localStorage.getItem('clickon_user');
 
@@ -21,6 +25,11 @@ function checkLoginNavbar() {
 
     if (token && userStr) {
         const user = JSON.parse(userStr);
+        
+        // Tampilkan Menu Riwayat
+        if (historyLink) historyLink.classList.remove('hidden');
+
+        // Logic Tombol Dashboard (Admin vs User)
         if (user.role === 'admin' || user.role === 'panitia') {
             if(adminLink) adminLink.classList.remove('hidden');
             authButton.textContent = 'Dashboard Admin';
@@ -28,7 +37,10 @@ function checkLoginNavbar() {
             authButton.classList.remove('bg-accent', 'text-black');
             authButton.classList.add('bg-zinc-800', 'text-white', 'border', 'border-white/20');
         } else {
-            authButton.textContent = `Logout (${user.full_name || 'User'})`;
+            // Tampilkan Nama User
+            const displayName = user.fullName || user.full_name || 'User'; 
+            authButton.textContent = `Logout (${displayName})`;
+            authButton.href = "#"; 
             authButton.classList.remove('bg-accent', 'text-black');
             authButton.classList.add('bg-red-600', 'text-white', 'hover:bg-red-700');
             authButton.onclick = (e) => { e.preventDefault(); logout(); };
@@ -36,6 +48,7 @@ function checkLoginNavbar() {
     }
 }
 
+// --- 2. LOGIKA HALAMAN INDEX (User) ---
 async function loadConcerts() {
     const grid = document.getElementById('concert-grid');
     if (!grid) return; 
@@ -45,13 +58,19 @@ async function loadConcerts() {
         const events = await res.json();
         grid.innerHTML = '';
 
-        if (!events.length) return grid.innerHTML = '<p class="col-span-full text-center text-gray-500 py-10">Belum ada konser.</p>';
+        if (!events.length) {
+            grid.innerHTML = '<p class="col-span-full text-center text-gray-500 py-10">Belum ada konser.</p>';
+            return;
+        }
 
         events.forEach(event => {
             const date = new Date(event.event_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-            let actionBtn = `<button onclick="buyTicket(${event.id})" class="w-full mt-4 block text-center bg-accent text-black font-bold py-3 rounded-lg transition duration-300 hover:bg-accent-hover">Beli Tiket</button>`;
+            
+            // [FIX PENTING] Tombol diganti menjadi Link <a> agar Redirect ke Checkout
+            let actionBtn = `<a href="checkout.html?event_id=${event.id}" class="w-full mt-4 block text-center bg-accent text-black font-bold py-3 rounded-lg transition duration-300 hover:bg-accent-hover">Beli Tiket</a>`;
+            
             let badgeClass = "bg-black/70 text-white";
-            let badgeText = event.default_category;
+            let badgeText = event.default_category || "General";
 
             if (event.status === 'sold_out') {
                 actionBtn = `<button disabled class="w-full mt-4 block text-center bg-zinc-800 text-gray-500 font-bold py-3 rounded-lg cursor-not-allowed border border-white/10">SOLD OUT</button>`;
@@ -59,7 +78,6 @@ async function loadConcerts() {
                 badgeText = "SOLD OUT";
             }
 
-            // Fallback Image
             const imgUrl = (event.image_url && event.image_url.length > 10) 
                 ? event.image_url 
                 : 'https://images.unsplash.com/photo-1459749411177-d4a428c37ae5?auto=format&fit=crop&q=80&w=800';
@@ -83,27 +101,157 @@ async function loadConcerts() {
                 </div>
             `;
         });
-    } catch (e) { grid.innerHTML = `<p class="col-span-full text-center text-red-500">Gagal memuat data.</p>`; }
+    } catch (e) {
+        console.error(e);
+        grid.innerHTML = `<p class="col-span-full text-center text-red-500">Gagal memuat data.</p>`;
+    }
 }
 
-async function buyTicket(eventId) {
+// --- 3. LOGIKA HALAMAN HISTORY (User) ---
+async function loadUserHistory() {
+    const container = document.getElementById('history-list'); 
+    if (!container) return; 
+
     const token = localStorage.getItem('clickon_token');
-    if (!token) return window.location.href = 'login.html';
-    if (!confirm("Beli tiket ini?")) return;
+    if (!token) {
+        window.location.href = 'login.html';
+        return;
+    }
 
     try {
-        const res = await fetch(`${API_URL}/checkout`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ eventId: eventId })
+        const res = await fetch(`${API_URL}/tickets/history`, {
+            headers: { 'Authorization': `Bearer ${token}` }
         });
-        const data = await res.json();
-        if (res.ok) alert(`✅ Berhasil! Kode: ${data.ticket.ticketCode}`);
-        else alert(`❌ Gagal: ${data.message}`);
-    } catch (err) { alert("Error koneksi."); }
+        
+        if (res.status === 401 || res.status === 403) {
+            logout(); return;
+        }
+
+        const tickets = await res.json();
+        container.innerHTML = '';
+
+        if (tickets.length === 0) {
+            container.innerHTML = `
+                <div class="col-span-full text-center py-12 border border-white/10 rounded-xl bg-zinc-900/50">
+                    <p class="text-gray-400 mb-4">Belum ada riwayat pembelian.</p>
+                    <a href="index.html" class="text-accent font-bold hover:underline">Cari Konser</a>
+                </div>
+            `;
+            return;
+        }
+
+        tickets.forEach(t => {
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${t.ticket_code}`;
+            const statusClass = t.status === 'paid' ? 'text-green-400 bg-green-900/20 border-green-900' : 'text-gray-500 bg-zinc-800 border-zinc-700';
+            const statusText = t.status === 'paid' ? 'BERLAKU' : 'SUDAH DIPAKAI';
+
+            container.innerHTML += `
+                <div class="bg-zinc-900 border border-white/10 rounded-xl overflow-hidden flex flex-col md:flex-row hover:border-accent/50 transition shadow-lg">
+                    <div class="p-6 flex-1">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-xl font-bold text-white mb-1">${t.title}</h3>
+                                <p class="text-accent text-sm font-semibold">📍 ${t.venue}</p>
+                            </div>
+                            <span class="px-3 py-1 text-xs font-bold border rounded ${statusClass}">${statusText}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 text-sm text-gray-400 mb-4 border-t border-white/5 pt-4">
+                            <div><p class="text-xs uppercase opacity-50 mb-1">Tanggal Event</p><p class="text-white font-medium">📅 ${new Date(t.event_date).toLocaleDateString('id-ID')}</p></div>
+                            <div><p class="text-xs uppercase opacity-50 mb-1">Kode Tiket</p><p class="text-white font-mono tracking-wider bg-black/30 p-1 rounded inline-block">${t.ticket_code}</p></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 flex items-center justify-center md:w-48 border-t md:border-t-0 border-white/10">
+                        <div class="text-center"><img src="${qrUrl}" alt="QR Code" class="w-28 h-28 mix-blend-multiply opacity-90 mx-auto"><p class="text-[10px] text-black font-bold mt-2">SCAN ME</p></div>
+                    </div>
+                </div>
+            `;
+        });
+    } catch (e) {
+        container.innerHTML = `<div class="col-span-full text-center py-10 text-red-500">Gagal memuat riwayat.</div>`;
+    }
 }
 
-// ADMIN LOGIC
+// --- 4. LOGIKA ADMIN DASHBOARD (Stats, Events, Merch) ---
+
+// A. Load Statistik Dashboard
+async function loadDashboardStats() {
+    const revEl = document.getElementById('stat-revenue');
+    if (!revEl) return;
+
+    try {
+        const token = localStorage.getItem('clickon_token');
+        const res = await fetch(`${API_URL}/admin/stats`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const stats = await res.json();
+
+        document.getElementById('stat-revenue').innerText = formatRupiah(stats.totalRevenue);
+        document.getElementById('stat-tickets').innerText = stats.ticketsSold;
+        document.getElementById('stat-events').innerText = stats.totalEvents;
+        document.getElementById('stat-merch').innerText = stats.totalMerch;
+    } catch (e) { console.error("Stats fail", e); }
+}
+
+// B. Load Merchandise
+async function loadMerchandise() {
+    const tbody = document.getElementById('merch-table-body');
+    if (!tbody) return;
+
+    try {
+        const res = await fetch(`${API_URL}/merchandise`);
+        const items = await res.json();
+        tbody.innerHTML = '';
+
+        if (!items.length) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">Belum ada barang.</td></tr>';
+            return;
+        }
+
+        items.forEach(item => {
+            const eventName = item.event_name || '<span class="text-gray-500">Umum</span>';
+            tbody.innerHTML += `
+                <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                    <td class="p-4 flex items-center gap-3">
+                        <div class="w-10 h-10 bg-zinc-800 rounded overflow-hidden">
+                            <img src="${item.image_url || ''}" class="w-full h-full object-cover">
+                        </div>
+                        <span class="font-bold text-white">${item.item_name}</span>
+                    </td>
+                    <td class="p-4 text-gray-300 text-sm">${eventName}</td>
+                    <td class="p-4 text-accent font-mono">${formatRupiah(item.price)}</td>
+                    <td class="p-4 text-white">${item.stock}</td>
+                    <td class="p-4 text-right">
+                        <button onclick="deleteMerch(${item.id})" class="text-red-500 hover:text-white bg-red-500/10 hover:bg-red-600 px-3 py-1 rounded text-xs">Hapus</button>
+                    </td>
+                </tr>
+            `;
+        });
+    } catch (e) { console.error(e); }
+}
+
+// Helper Dropdown Event di Modal Merch
+async function loadEventsForSelect() {
+    const select = document.getElementById('merchEventSelect');
+    try {
+        const res = await fetch(`${API_URL}/events`);
+        const events = await res.json();
+        select.innerHTML = '<option value="">-- Umum / Tanpa Event --</option>';
+        events.forEach(ev => {
+            select.innerHTML += `<option value="${ev.id}">${ev.title}</option>`;
+        });
+    } catch(e){}
+}
+
+async function deleteMerch(id) {
+    if(!confirm("Hapus barang ini?")) return;
+    const token = localStorage.getItem('clickon_token');
+    try {
+        const res = await fetch(`${API_URL}/merchandise/${id}`, { method: 'DELETE', headers: {'Authorization': `Bearer ${token}`} });
+        if(res.ok) { loadMerchandise(); loadDashboardStats(); }
+    } catch(e) { alert("Error"); }
+}
+
+// C. Load Events Admin
 async function loadAdminEvents() {
     const tbody = document.getElementById('events-table-body');
     if (!tbody) return; 
@@ -149,7 +297,7 @@ async function deleteEvent(id) {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (res.ok) { alert("Terhapus!"); loadAdminEvents(); }
+        if (res.ok) { alert("Terhapus!"); loadAdminEvents(); loadDashboardStats(); }
         else { const d = await res.json(); alert(d.message); }
     } catch (e) { alert("Error koneksi."); }
 }
@@ -166,7 +314,9 @@ async function toggleEventStatus(id, status) {
     } catch (e) { alert('Error.'); }
 }
 
-// CONVERT FILE TO BASE64
+// --- 5. FORM HANDLERS (Add Event & Merch) ---
+
+// Helper Base64
 const toBase64 = file => new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -174,37 +324,20 @@ const toBase64 = file => new Promise((resolve, reject) => {
     reader.onerror = error => reject(error);
 });
 
-// ADD EVENT LOGIC
+// Add Event Form
 const addEventForm = document.getElementById('addEventForm');
 if (addEventForm) {
     addEventForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const token = localStorage.getItem('clickon_token'); 
-        
-        // Disable tombol biar ga diklik 2x
         const btnSubmit = e.target.querySelector('button[type="submit"]');
-        btnSubmit.disabled = true;
-        btnSubmit.textContent = "Menyimpan...";
+        btnSubmit.disabled = true; btnSubmit.textContent = "Menyimpan...";
 
-        // Handle Image
         const fileInput = document.getElementById('eventImageFile');
         let imageBase64 = "";
-        
         if (fileInput.files.length > 0) {
-            try {
-                // Batasi ukuran di client juga (misal 5MB peringatan)
-                if(fileInput.files[0].size > 5 * 1024 * 1024) {
-                    if(!confirm("Gambar cukup besar (>5MB), proses mungkin agak lama. Lanjut?")) {
-                        btnSubmit.disabled = false; btnSubmit.textContent = "Simpan";
-                        return;
-                    }
-                }
-                imageBase64 = await toBase64(fileInput.files[0]);
-            } catch (err) {
-                alert("Gagal memproses gambar.");
-                btnSubmit.disabled = false; btnSubmit.textContent = "Simpan";
-                return;
-            }
+            try { imageBase64 = await toBase64(fileInput.files[0]); } 
+            catch (err) { alert("Gagal proses gambar."); return; }
         }
 
         const data = {
@@ -222,32 +355,49 @@ if (addEventForm) {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(data)
             });
-
-            // Cek Status Response
             if (res.ok) {
-                alert('Berhasil!');
-                closeModal('eventModal'); 
-                loadAdminEvents();
-                addEventForm.reset();
+                alert('Berhasil!'); closeModal('eventModal'); loadAdminEvents(); loadDashboardStats(); addEventForm.reset();
             } else {
-                // Jika error 413 (Payload Too Large) biasanya response HTML/Text, bukan JSON
-                if (res.status === 413) {
-                    alert("Gagal: Gambar terlalu besar! (Maks 50MB)");
-                } else {
-                    const errJson = await res.json();
-                    alert('Gagal: ' + (errJson.message || res.statusText));
-                }
+                const errJson = await res.json(); alert('Gagal: ' + (errJson.message || res.statusText));
             }
-        } catch (err) { 
-            console.error(err);
-            alert('Error koneksi atau Server Down.'); 
-        } finally {
-            btnSubmit.disabled = false;
-            btnSubmit.textContent = "Simpan";
-        }
+        } catch (err) { alert('Error koneksi.'); } 
+        finally { btnSubmit.disabled = false; btnSubmit.textContent = "Simpan"; }
     });
 }
 
+// Add Merchandise Form
+const addMerchForm = document.getElementById('addMerchForm');
+if (addMerchForm) {
+    addMerchForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem('clickon_token');
+        const btn = e.target.querySelector('button[type="submit"]');
+        btn.disabled = true; btn.textContent = "Menyimpan...";
+
+        const fileInput = document.getElementById('merchImageFile');
+        let imgBase64 = "";
+        if (fileInput.files.length > 0) imgBase64 = await toBase64(fileInput.files[0]);
+
+        const data = {
+            item_name: document.getElementById('merchName').value,
+            price: document.getElementById('merchPrice').value,
+            stock: document.getElementById('merchStock').value,
+            event_id: document.getElementById('merchEventSelect').value,
+            image_url: imgBase64
+        };
+
+        try {
+            const res = await fetch(`${API_URL}/merchandise`, {
+                method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`}, body: JSON.stringify(data)
+            });
+            if(res.ok) { alert("Sukses!"); closeModal('merchModal'); loadMerchandise(); loadDashboardStats(); addMerchForm.reset(); }
+            else alert("Gagal");
+        } catch(e) { alert("Error"); }
+        finally { btn.disabled = false; btn.textContent = "Simpan"; }
+    });
+}
+
+// Validasi Tiket (Scanner)
 async function validateTicket() {
     const code = document.getElementById('ticketCodeInput').value;
     const token = localStorage.getItem('clickon_token');
